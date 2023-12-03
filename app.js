@@ -3,7 +3,15 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
-require('dotenv').config();
+const dotenv = require('dotenv');
+
+if (process.env.NODE_ENV === 'dev') {
+  dotenv.config({ path: '.env.dev' });
+}if (process.env.NODE_ENV === 'prod') {
+  dotenv.config({ path: '.env.prod' });
+} else {
+  dotenv.config()
+}
 
 const indexRouter = require('./routes/index');
 const appConstant = require('./utils/appConstant');
@@ -20,15 +28,18 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+app.get('/', (req, res) => { res.render('index', { title: 'RePack  Creation' }) });
 app.use(appConstant.PREFIX_URL, indexRouter)
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
+
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
