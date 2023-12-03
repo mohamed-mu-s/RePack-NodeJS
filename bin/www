@@ -7,13 +7,15 @@
 const app = require('../app');
 const debug = require('debug')('repack:server');
 const http = require('http');
+const connectDB = require('../config/dbServer');
+const apiConstant = require('../utils/apiConstant');
 
 /**
  * Get port from environment and store in Express.
  */
 
-const port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
+const PORT = normalizePort(apiConstant.PORT);
+app.set('port', PORT);
 
 /**
  * Create HTTP server.
@@ -25,9 +27,14 @@ const server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+connectDB().then(() => {
+  app.listen(PORT, () => {
+      const URI = PORT === 8080 ? `http://localhost:${PORT}/` : `${PORT}`;
+      console.log(`Server Port: ${URI}`);
+  })
+  server.on('error', onError);
+  server.on('listening', onListening);
+}).catch(err => console.error(err));
 
 /**
  * Normalize a port into a number, string, or false.
