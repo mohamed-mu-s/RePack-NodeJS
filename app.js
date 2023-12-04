@@ -15,6 +15,7 @@ if (process.env.NODE_ENV === 'dev') {
 
 const indexRouter = require('./routes/index');
 const appConstant = require('./utils/appConstant');
+const sessionUtil = require('./utils/sessionUtil');
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.get('/', (req, res) => { res.render('index', { title: 'RePack  Creation' }) });
+app.use(sessionUtil.authenticateToken)
 app.use(appConstant.PREFIX_URL, indexRouter)
 
 // catch 404 and forward to error handler

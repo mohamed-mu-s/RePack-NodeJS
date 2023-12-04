@@ -1,18 +1,17 @@
-const bcrypt = require('bcrypt')
-const apiConstant = require('../utils/apiConstant');
+const bcrypt = require('bcrypt');
 const User = require('../models/UserModel');
-
+const sessionUtil = require('../utils/sessionUtil');
 
 module.exports = {
     signUp: async (req, res) => {
         try {
-            let { name, email, password, dateOfBirth } = req.body;
+            let { name, email, password, dateOfBirth, role } = req.body;
             name = name.trim();
             email = email.trim();
             password = password.trim();
             dateOfBirth = dateOfBirth.trim();
 
-            await validateInput(name, email, password, dateOfBirth);
+            await validateInput(name, email, password, dateOfBirth, role);
 
             // Check if user already exists
             const existingUser = await User.findOne({ email });
@@ -29,8 +28,9 @@ module.exports = {
             const newUser = new User({
                 name,
                 email,
+                role,
                 password: hashPassword,
-                dateOfBirth,
+                dateOfBirth
             });
 
             const result = await newUser.save();
@@ -50,15 +50,16 @@ module.exports = {
             }
 
             // checking if user already exists
-            const data = await User.findOne({ email }).lean({getters: true});
+            const user = await User.findOne({ email }).lean({ getters: true });
 
-            if (data) {
-                const hashPassword = data.password;
+            if (user) {
+                const hashPassword = user.password;
                 const result = await bcrypt.compare(password, hashPassword);
 
                 if (result) {
-                    delete data.password;
-                    return data; // Return the user data if the password is correct
+                    delete user.password;
+                    const token = sessionUtil.jwtSign({ userId: user._id, name: user.name, role: user.role, email: user.email });
+                    return {...user, token}; // Return the user data if the password is correct
                 } else {
                     throw new Error('Invalid password entered!');
                 }
@@ -71,8 +72,8 @@ module.exports = {
     }
 }
 
-async function validateInput(name, email, password, dateOfBirth) {
-    if (!name || !email || !password || !dateOfBirth) {
+async function validateInput(name, email, password, dateOfBirth, role) {
+    if (!name || !email || !password || !dateOfBirth || (!role && !role?.length > 0)) {
         throw new Error('Empty input fields!');
     }
 
